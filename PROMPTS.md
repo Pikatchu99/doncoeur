@@ -22,6 +22,10 @@ Passage de v0 à Claude Code : v0 est resté au stade du scaffold générique (u
 11. **Audit Lighthouse** : deux photographies faisaient à elles seules plus d'1 Mo (jamais redimensionnées depuis leur export d'origine, 3936×2624 et 2184×2184 px pour un affichage à ~300-500 px) — recompressées (~200 Ko au total). Correctifs d'accessibilité : `<select>` sans label associé, bouton menu sans nom accessible dynamique, accordéons FAQ/menu sans `aria-expanded`.
 12. **Relecture face au brief du challenge** (fourni tardivement dans la session) : identification d'écarts de conformité — voir « Limites rencontrées ».
 13. **Mise en conformité process** : initialisation du dépôt git, rédaction du README, création et publication du dépôt GitHub public, renommage du projet (le nom « HemoLink » n'était que l'exemple donné par le brief — choix d'un nom original, **DonCœur**).
+14. **Tentative de déploiement Vercel (par le porteur du projet)** : `pnpm install` échouait côté Vercel. Diagnostic : version de pnpm non épinglée (`packageManager` absent de `package.json`), et un champ `pnpm.overrides` obsolète (non lu par pnpm 10+, simple warning en local mais source d'incohérence possible en CI). Les deux corrigés ; build de production revérifié en local avant nouvelle tentative. Le rattachement du dépôt GitHub au projet Vercel a aussi échoué séparément — une autorisation à accorder manuellement côté GitHub (l'IA ne peut pas accorder une permission OAuth à la place de l'utilisateur).
+15. **Répertoire de centres remonté à 8**, toujours au Bénin mais réparti sur 8 villes (Cotonou, Porto-Novo, Parakou, Abomey-Calavi, Abomey, Bohicon, Natitingou, Ouidah) — conforme au minimum du brief sans abandonner le recentrage géographique choisi au point 7.
+16. **Algorithme d'éligibilité complété** conformément à l'annexe du brief : délai post-don dépendant du sexe (3 mois homme / 4 mois femme), cas « aucun don antérieur », date de prochaine éligibilité calculée et affichée si le délai n'est pas écoulé, message explicite du critère bloquant, mention obligatoire de l'entretien médical. A nécessité de rétablir la question « sexe » retirée au point 8 — reformulée avec un motif explicite (« ça ajuste le délai entre deux dons ») pour qu'elle ne paraisse plus arbitraire.
+17. **États d'interface manquants ajoutés** : message d'erreur si une question du simulateur est laissée vide, message dédié si une recherche de centre ne retourne aucun résultat.
 
 ## Ajustements manuels
 
@@ -29,7 +33,7 @@ Passage de v0 à Claude Code : v0 est resté au stade du scaffold générique (u
 - Arbitrage de scope sur l'illustration hero : abandon volontaire d'un bras/main dessinés (trop dépendant d'un outil de dessin visuel pour bien rendre), au profit d'une poche + tube stylisés, plus sobres mais fiables à exécuter en SVG codé à la main.
 - Ajustement direct des coordonnées de la courbe du tube hero **dans le code**, par le porteur du projet lui-même, plutôt que par prompt — la précision visuelle d'une courbe organique reste plus rapide à régler à la main qu'à décrire en langage naturel.
 - Recentrage géographique délibéré (Bénin plutôt que panafricain) pour une identité plus crédible et vérifiable.
-- Retrait puis rétablissement d'une question du simulateur d'éligibilité après une incompréhension sur *laquelle* des questions était visée.
+- Retrait puis rétablissement d'une question du simulateur d'éligibilité après une incompréhension sur *laquelle* des questions était visée — puis rétablissement définitif de la question « sexe » une fois l'annexe du brief relue en détail, car le calcul du délai post-don en dépend.
 
 ## Limites rencontrées
 
@@ -38,11 +42,15 @@ Passage de v0 à Claude Code : v0 est resté au stade du scaffold générique (u
 - Un croquis annoté à la main transmet une intention (forme, rythme, points de connexion) mais rarement une géométrie exacte — l'interprétation en coordonnées a fait perdre en fidélité, d'où les allers-retours.
 - Deux systèmes de coordonnées différents (le logo dans le header, sticky, vs le SVG du hero) ne partagent pas nativement un même repère — la synchronisation logo/tube (finalement abandonnée par choix produit) demandait une mesure DOM à l'exécution, fragile en cas de changement de mise en page.
 
+**Avec l'outil (Vercel/CI), en plus de ce qui précède :**
+- Un échec `pnpm install` en CI sans accès aux logs complets de la plateforme est difficile à diagnostiquer à distance : correction faite par élimination des causes les plus probables (version de pnpm non épinglée, config obsolète), vérifiée par simulation locale (`pnpm install --frozen-lockfile` + `pnpm build`), mais sans confirmation finale possible depuis la session (pas d'accès au dashboard Vercel de l'utilisateur).
+- L'autorisation OAuth entre Vercel et le compte GitHub est une action qui appartient exclusivement à l'utilisateur — l'IA ne peut ni la déclencher ni la vérifier.
+
 **Sur le contenu / la conformité (état à date de ce document) :**
-- Le répertoire de centres compte actuellement **3 centres** (Cotonou, Porto-Novo, Parakou) — sous le minimum de 8 exigé par le brief. Décision à trancher : remonter à 8+ centres en restant au Bénin (plusieurs villes du pays), ou élargir la zone géographique.
-- L'algorithme d'éligibilité applique actuellement les seuils d'âge (18-65) et de poids (≥ 50 kg), mais **n'implémente pas encore** le délai post-don dépendant du sexe (3 mois homme / 4 mois femme) exigé par l'annexe du brief — la question « sexe » ayant été retirée du formulaire en cours de route, cette donnée n'est plus collectée. À revoir.
 - La section « État des réserves » (besoins par groupe sanguin, C7 du brief) n'existe pas encore.
-- Les états d'absence de résultat (recherche de centre) et d'erreur de saisie (formulaire d'éligibilité) ne sont pas encore explicites dans l'interface.
 - La carte est une représentation indicative (tuiles OpenStreetMap), pas un service de géolocalisation connecté ; « Simuler ma position » utilise une position fixe.
 - Les horaires, adresses et coordonnées des centres sont des données de démonstration à remplacer par des informations officielles avant toute mise en ligne réelle.
-- Déploiement public non encore réalisé au moment de la rédaction de ce document.
+- Pas de section autonome pour « Qui peut donner » (C2 du brief) — les critères généraux ne sont exposés qu'à travers le simulateur interactif (C3), pas résumés à part.
+- Déploiement public en cours (pris en charge par le porteur du projet) — pas encore confirmé au moment de la rédaction de ce document.
+
+**Résolu depuis la version précédente de ce document :** répertoire remonté à 8 centres (multi-villes, Bénin), algorithme d'éligibilité conforme à l'annexe du brief, états d'absence de résultat et d'erreur de saisie ajoutés, dépôt git initialisé et publié, README rédigé, projet renommé.
